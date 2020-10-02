@@ -1,0 +1,2 @@
+# node_mysal
+使用nodejs与mysql搭建的简单后端接口api项目

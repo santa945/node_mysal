@@ -6,51 +6,50 @@ const db = require('../db')
 const { formatData } = require('../utils')
 
 /**
- * 注册用户
- * /user
- * insert into users(`username`,`phone`) values('xxx','A')
+ * 获取优惠券列表
+ * /member/coupon/page
+ * SELECT * FROM coupon_list WHERE STATUS="2" AND consumeChannels="1"
  */
 
-Router.post('/', async (req, res) => {
-    let keys = ''
-    let values = ''
+Router.post('/coupon/page', async (req, res) => {
+    let status = ''
+    let consumeChannels = ''
+    let sql = 'select * from coupon_list'
     for (let key in req.body) {
-        keys += key + ','
-        values += '"' + req.body[key] + '",'
+        if (key === 'status') {
+            status = req.body[key]
+        } else if (key === 'consumeChannels') {
+            consumeChannels = req.body[key]
+        }
     }
-
-    //删除多余逗号
-    keys = keys.slice(0, -1)
-    values = values.slice(0, -1)
-    let sql = `insert into users(${keys}) values(${values})`;
-    console.log('sql=', sql);
+    sql += ` where status="${status}"`;
+    if (consumeChannels) { sql += ` and consumeChannels="${consumeChannels}"`; }
+    // 0-未使用，1-已使用，2-已失效
     try {
-        let data = await db.query(sql)
-        data = formatData({
-            data,
-            msg: "数据插入成功"
-        })
-        res.send(data)
+        let list = await db.query(sql);
+        console.log('data', list.length);
+        res.send(formatData({
+            data: {
+                couponList: list,
+                total: list.length
+            }
+        }))
     } catch (err) {
-        let data = formatData({
-            status: 400,
-            msg: err
-        })
-        res.send(data)
+        console.log('err', err);
+        res.send(err)
     }
 })
 
 /**
-* 获取用户信息
-* /user/123 
+* 获取会员信息信息
+* /member/getMemberInfo 
 */
 
-Router.route('/:id')
+Router.route('/getMemberInfo')
 
     .get(async (req, res) => {
         let { id } = req.params
-        console.log('sss');
-        let sql = `select * from users where id="${id}"`
+        let sql = `select * from member_list`
         try {
             let data = await db.query(sql);
             console.log('data', data);
